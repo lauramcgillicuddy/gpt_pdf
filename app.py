@@ -6,8 +6,12 @@ from datetime import datetime
 from io import BytesIO
 import tempfile
 
-# Import our ChatGPT parser
-from chatgpt_export import ChatGPTParser, export_to_word, export_to_pdf
+# Import our ChatGPT parser and advanced search functions
+from chatgpt_export import (
+    ChatGPTParser, export_to_word, export_to_pdf,
+    search_conversations, detect_themes, detect_characters,
+    filter_by_themes, filter_by_characters
+)
 
 # 🌙✨ PASTEL GOTH AESTHETIC ✨🌙
 def load_custom_css():
@@ -260,33 +264,80 @@ def show_upload_page():
             st.error(f"Oops! Something went wrong: {str(e)} 💔")
 
 def show_conversations(conversations):
-    """Display conversations with search and filters! 💜"""
+    """Display conversations with advanced search and filters! 💜✨"""
 
     st.markdown("<div class='lace-divider'></div>", unsafe_allow_html=True)
     st.markdown("## 🔮 Your Conversations 🔮")
 
-    # Search and filters
+    # Advanced search section
+    st.markdown("### 🔍 Search & Filter")
+
+    # Search row
     col1, col2 = st.columns([2, 1])
 
     with col1:
         search_query = st.text_input(
-            "🔍 Search conversations",
-            placeholder="Type to search..."
+            "💬 Search text",
+            placeholder="Search in titles and content...",
+            help="Searches both conversation titles and message content!"
         )
 
     with col2:
-        sort_option = st.selectbox(
-            "✨ Sort by",
-            ["Recent first", "Oldest first", "Title A-Z", "Most messages"]
+        search_in_content = st.checkbox("🔍 Search in messages", value=True, help="Search within message content (not just titles)")
+
+    # Advanced filters row
+    st.markdown("#### ✨ Advanced Filters")
+    col1, col2 = st.columns(2)
+
+    with col1:
+        # Theme filter with all available themes
+        available_themes = [
+            '💕 Romance', '✨ Fluff', '🔥 Explicit', '😢 Angst',
+            '😱 Horror/Fear', '⚔️ Action', '😂 Humor', '🎭 Drama',
+            '🔮 Fantasy', '🚀 Sci-Fi', '🌸 Slice of Life', '🎨 Creative Writing'
+        ]
+        selected_themes = st.multiselect(
+            "🎨 Filter by themes",
+            options=available_themes,
+            help="Shows conversations containing these themes"
         )
 
-    # Filter conversations
+    with col2:
+        character_search = st.text_input(
+            "👤 Search for characters",
+            placeholder="e.g., Harry, Hermione, Ron",
+            help="Find conversations mentioning these character names (comma-separated)"
+        )
+
+    # Sort options
+    sort_option = st.selectbox(
+        "✨ Sort by",
+        ["Recent first", "Oldest first", "Title A-Z", "Most messages"]
+    )
+
+    st.markdown("<div class='lace-divider'></div>", unsafe_allow_html=True)
+
+    # Apply filters
     filtered_convos = conversations
+
+    # Text search (in titles and/or content)
     if search_query:
-        filtered_convos = [
-            c for c in conversations
-            if search_query.lower() in c.get('title', '').lower()
-        ]
+        filtered_convos = search_conversations(
+            filtered_convos,
+            search_query,
+            search_content=search_in_content,
+            search_titles=True
+        )
+
+    # Theme filter
+    if selected_themes:
+        filtered_convos = filter_by_themes(filtered_convos, selected_themes)
+
+    # Character filter
+    if character_search:
+        character_names = [name.strip() for name in character_search.split(',') if name.strip()]
+        if character_names:
+            filtered_convos = filter_by_characters(filtered_convos, character_names)
 
     # Sort conversations
     if sort_option == "Recent first":
@@ -307,6 +358,10 @@ def show_conversations(conversations):
         create_time = datetime.fromtimestamp(convo.get('create_time', 0))
         message_count = len(convo.get('messages', []))
 
+        # Detect themes and characters for this conversation
+        themes = detect_themes(convo)
+        characters = detect_characters(convo, min_mentions=3)
+
         with st.expander(f"💬 {title}"):
             col1, col2, col3 = st.columns([2, 1, 1])
 
@@ -317,6 +372,20 @@ def show_conversations(conversations):
             with col3:
                 if st.button("👁️ View", key=f"view_{idx}"):
                     st.session_state[f'viewing_{idx}'] = True
+
+            # Show detected themes and characters
+            if themes or characters:
+                st.markdown("---")
+
+                if themes:
+                    st.markdown("**🎨 Detected Themes:**")
+                    theme_badges = " ".join([f"`{theme}`" for theme in themes])
+                    st.markdown(theme_badges)
+
+                if characters:
+                    st.markdown("**👤 Main Characters:**")
+                    char_list = ", ".join([f"**{c['name']}** ({c['mentions']}×)" for c in characters[:5]])  # Top 5
+                    st.markdown(char_list)
 
             # Show conversation if viewing
             if st.session_state.get(f'viewing_{idx}', False):

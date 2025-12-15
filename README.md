@@ -9,12 +9,15 @@ A beautifully designed Streamlit app for viewing and exporting your ChatGPT conv
 
 - 💜 **Beautiful Pastel Goth UI** - Purple, pink, and black color scheme with lace-like decorative elements
 - 📦 **Easy Upload** - Support for both ZIP and JSON ChatGPT exports
-- 🔍 **Smart Search** - Find conversations by title instantly
-- 🎨 **Multiple Sort Options** - Sort by date, title, or message count
-- 💬 **Conversation Viewer** - Color-coded messages with timestamps
-- 📄 **Word Export** - Download conversations as .docx files
+- 🔍 **Advanced Search** - Search in both titles AND message content!
+- 🎨 **Theme Detection** - Automatically detects content themes like Romance, Fluff, Explicit, Angst, Horror, Action, Humor, and more!
+- 👤 **Character Detection** - Smart AI finds recurring character names mentioned in conversations
+- 🎭 **Content Filtering** - Filter conversations by detected themes or character names
+- 📊 **Multiple Sort Options** - Sort by date, title, or message count
+- 💬 **Beautiful Conversation Viewer** - Color-coded messages with timestamps
+- 📄 **Word Export** - Download conversations as .docx files with pastel styling
 - 📑 **PDF Export** - Generate beautiful PDF documents
-- 🌙 **Adorable Design** - Every detail crafted with love!
+- 🌙 **Adorable Design** - Every detail crafted with love and dark magic!
 
 ## 🚀 Quick Start
 
@@ -53,9 +56,16 @@ streamlit run app.py
 
 1. **Upload** - Drop your ChatGPT export (ZIP or JSON) in the upload area
 2. **Browse** - See all your conversations with titles, dates, and message counts
-3. **Search** - Use the search bar to find specific conversations
-4. **Sort** - Choose how to organize your conversations
-5. **View** - Click "View" to see the full conversation thread
+3. **Advanced Search** 🔍:
+   - **Text Search**: Search in titles and/or message content
+   - **Theme Filter**: Select themes like Romance 💕, Fluff ✨, Angst 😢, Horror 😱, and more
+   - **Character Search**: Enter character names (comma-separated) to find conversations mentioning them
+   - Themes and characters are automatically detected for each conversation!
+4. **Sort** - Choose how to organize your conversations (Recent, Oldest, A-Z, Most messages)
+5. **View Details** - Each conversation shows:
+   - Detected themes with cute emoji tags
+   - Main characters with mention counts
+   - Full message thread when you click "View"
 6. **Export** - Download individual conversations as Word or PDF files
 
 ## 🎨 Aesthetic Details
@@ -93,11 +103,35 @@ gpt_pdf/
 - Preserves timestamps and metadata
 - Supports both ZIP and JSON formats
 
-### Search & Filter
-- Real-time search as you type
+### Advanced Search & Filter 🔍✨
+
+**Text Search:**
+- Search in conversation titles
+- Search within message content
+- Toggle between title-only or full content search
 - Case-insensitive matching
-- Multiple sort options
-- Message count display
+
+**Theme Detection:**
+Automatically detects 12 different content themes:
+- 💕 **Romance** - Love, dating, relationships
+- ✨ **Fluff** - Cute, wholesome, cozy content
+- 🔥 **Explicit** - Mature/NSFW content
+- 😢 **Angst** - Sad, emotional, heartbreaking
+- 😱 **Horror/Fear** - Scary, creepy, dark themes
+- ⚔️ **Action** - Fighting, battles, combat
+- 😂 **Humor** - Funny, comedy, jokes
+- 🎭 **Drama** - Conflict, tension, emotional intensity
+- 🔮 **Fantasy** - Magic, dragons, mythical creatures
+- 🚀 **Sci-Fi** - Space, technology, futuristic
+- 🌸 **Slice of Life** - Everyday, realistic scenarios
+- 🎨 **Creative Writing** - Stories, fanfiction, roleplay
+
+**Character Detection:**
+- Smart pattern matching finds capitalized names
+- Filters out common words
+- Counts mentions to identify main characters
+- Shows top 5 characters per conversation
+- Search for specific characters across all conversations
 
 ### Export Formats
 

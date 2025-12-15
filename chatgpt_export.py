@@ -7,8 +7,10 @@ import json
 import zipfile
 from pathlib import Path
 from datetime import datetime
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Set
 from io import BytesIO
+import re
+from collections import Counter
 
 try:
     from docx import Document
@@ -143,6 +145,241 @@ class ChatGPTParser:
             current_id = children[0] if children else None
 
         return messages
+
+
+# 🔍 ADVANCED SEARCH & ANALYSIS FUNCTIONS ✨
+
+def detect_characters(conversation: Dict[str, Any], min_mentions: int = 3) -> List[Dict[str, Any]]:
+    """
+    Detect character names mentioned in a conversation! 💜
+
+    Looks for capitalized words that appear multiple times (likely character names).
+
+    Args:
+        conversation: Conversation dictionary
+        min_mentions: Minimum number of mentions to consider as a character
+
+    Returns:
+        List of character dicts with name and mention count
+    """
+    messages = conversation.get('messages', [])
+    all_text = ' '.join(msg.get('content', '') for msg in messages)
+
+    # Find capitalized words (potential names)
+    # Matches words that start with capital letter, followed by lowercase
+    # This catches "Harry" but not "THE" or "SHOUTING"
+    potential_names = re.findall(r'\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\b', all_text)
+
+    # Common words to exclude (not character names)
+    common_words = {
+        'The', 'This', 'That', 'These', 'Those', 'I', 'You', 'He', 'She', 'It',
+        'We', 'They', 'What', 'When', 'Where', 'Why', 'How', 'Who', 'Which',
+        'Yes', 'No', 'Maybe', 'Please', 'Thanks', 'Hello', 'Hi', 'Bye',
+        'Today', 'Tomorrow', 'Yesterday', 'Monday', 'Tuesday', 'Wednesday',
+        'Thursday', 'Friday', 'Saturday', 'Sunday', 'January', 'February',
+        'March', 'April', 'May', 'June', 'July', 'August', 'September',
+        'October', 'November', 'December', 'ChatGPT', 'OpenAI'
+    }
+
+    # Count occurrences
+    name_counts = Counter(potential_names)
+
+    # Filter and format results
+    characters = []
+    for name, count in name_counts.most_common():
+        if count >= min_mentions and name not in common_words and len(name) > 1:
+            characters.append({
+                'name': name,
+                'mentions': count
+            })
+
+    return characters
+
+
+def detect_themes(conversation: Dict[str, Any]) -> List[str]:
+    """
+    Detect content themes/tags in a conversation! 🌙
+
+    Looks for keywords that indicate themes like fluff, romance, angst, etc.
+
+    Args:
+        conversation: Conversation dictionary
+
+    Returns:
+        List of detected theme tags
+    """
+    messages = conversation.get('messages', [])
+    all_text = ' '.join(msg.get('content', '') for msg in messages).lower()
+
+    # Theme keyword mappings with adorable pastel goth vibes! 💜
+    theme_keywords = {
+        '💕 Romance': [
+            'love', 'kiss', 'romance', 'romantic', 'dating', 'boyfriend', 'girlfriend',
+            'crush', 'flirt', 'heart', 'affection', 'valentine', 'date night', 'sweetheart'
+        ],
+        '✨ Fluff': [
+            'cute', 'adorable', 'sweet', 'wholesome', 'cozy', 'comfort', 'warm',
+            'snuggle', 'cuddle', 'soft', 'gentle', 'tender', 'precious', 'fluffy'
+        ],
+        '🔥 Explicit': [
+            'nsfw', 'explicit', 'mature', 'adult', 'sexual', 'intimate', 'rated',
+            'smut', 'lemon', '18+'
+        ],
+        '😢 Angst': [
+            'angst', 'sad', 'cry', 'tears', 'pain', 'hurt', 'suffer', 'tragic',
+            'heartbreak', 'sorrow', 'grief', 'anguish', 'despair', 'melancholy'
+        ],
+        '😱 Horror/Fear': [
+            'horror', 'fear', 'scary', 'terror', 'afraid', 'frightened', 'nightmare',
+            'creepy', 'eerie', 'spooky', 'haunted', 'dark', 'sinister', 'dread'
+        ],
+        '⚔️ Action': [
+            'fight', 'battle', 'combat', 'action', 'war', 'attack', 'sword',
+            'weapon', 'explosion', 'chase', 'duel', 'violence'
+        ],
+        '😂 Humor': [
+            'funny', 'hilarious', 'comedy', 'joke', 'laugh', 'humor', 'amusing',
+            'silly', 'goofy', 'witty', 'sarcasm', 'parody'
+        ],
+        '🎭 Drama': [
+            'drama', 'conflict', 'tension', 'intense', 'emotional', 'dramatic',
+            'confrontation', 'argument', 'dispute'
+        ],
+        '🔮 Fantasy': [
+            'magic', 'fantasy', 'wizard', 'witch', 'spell', 'enchant', 'dragon',
+            'elf', 'dwarf', 'fairy', 'mythical', 'supernatural', 'mystical'
+        ],
+        '🚀 Sci-Fi': [
+            'space', 'alien', 'robot', 'future', 'technology', 'cyber', 'ai',
+            'spacecraft', 'galaxy', 'planet', 'science fiction'
+        ],
+        '🌸 Slice of Life': [
+            'everyday', 'daily', 'ordinary', 'routine', 'casual', 'mundane',
+            'realistic', 'contemporary', 'normal life'
+        ],
+        '🎨 Creative Writing': [
+            'story', 'narrative', 'plot', 'character', 'fiction', 'writing',
+            'novel', 'fanfic', 'fanfiction', 'creative', 'roleplay', 'rp'
+        ]
+    }
+
+    detected_themes = []
+
+    for theme, keywords in theme_keywords.items():
+        # Count how many keywords from this theme appear
+        matches = sum(1 for keyword in keywords if keyword in all_text)
+
+        # If enough keywords match, add the theme
+        threshold = max(1, len(keywords) // 5)  # At least 20% of keywords
+        if matches >= threshold:
+            detected_themes.append(theme)
+
+    return detected_themes
+
+
+def search_conversations(
+    conversations: List[Dict[str, Any]],
+    query: str,
+    search_content: bool = True,
+    search_titles: bool = True
+) -> List[Dict[str, Any]]:
+    """
+    Advanced search through conversations! 🔍✨
+
+    Searches both titles and message content for the query.
+
+    Args:
+        conversations: List of conversation dictionaries
+        query: Search query string
+        search_content: Whether to search in message content
+        search_titles: Whether to search in titles
+
+    Returns:
+        List of matching conversations
+    """
+    if not query:
+        return conversations
+
+    query_lower = query.lower()
+    results = []
+
+    for convo in conversations:
+        match = False
+
+        # Search in title
+        if search_titles:
+            title = convo.get('title', '').lower()
+            if query_lower in title:
+                match = True
+
+        # Search in content
+        if search_content and not match:
+            messages = convo.get('messages', [])
+            for msg in messages:
+                content = msg.get('content', '').lower()
+                if query_lower in content:
+                    match = True
+                    break
+
+        if match:
+            results.append(convo)
+
+    return results
+
+
+def filter_by_themes(conversations: List[Dict[str, Any]], themes: List[str]) -> List[Dict[str, Any]]:
+    """
+    Filter conversations by detected themes! 🎨
+
+    Args:
+        conversations: List of conversation dictionaries
+        themes: List of theme tags to filter by
+
+    Returns:
+        Conversations that contain any of the specified themes
+    """
+    if not themes:
+        return conversations
+
+    results = []
+
+    for convo in conversations:
+        convo_themes = detect_themes(convo)
+        # Check if any of the requested themes are in this conversation
+        if any(theme in convo_themes for theme in themes):
+            results.append(convo)
+
+    return results
+
+
+def filter_by_characters(
+    conversations: List[Dict[str, Any]],
+    character_names: List[str]
+) -> List[Dict[str, Any]]:
+    """
+    Filter conversations by character names! 💜
+
+    Args:
+        conversations: List of conversation dictionaries
+        character_names: List of character names to search for
+
+    Returns:
+        Conversations that mention any of the specified characters
+    """
+    if not character_names:
+        return conversations
+
+    results = []
+
+    for convo in conversations:
+        characters = detect_characters(convo, min_mentions=2)
+        detected_names = [c['name'].lower() for c in characters]
+
+        # Check if any requested character is in this conversation
+        if any(char.lower() in detected_names for char in character_names):
+            results.append(convo)
+
+    return results
 
 
 def export_to_word(conversation: Dict[str, Any]) -> BytesIO:
