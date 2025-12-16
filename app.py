@@ -10,7 +10,7 @@ import tempfile
 from chatgpt_export import (
     ChatGPTParser, export_to_word, export_to_pdf,
     search_conversations, detect_themes, detect_characters,
-    filter_by_themes, filter_by_characters
+    filter_by_themes, filter_by_characters, analyze_character_gallery
 )
 
 # 🌙✨ PASTEL GOTH AESTHETIC ✨🌙
@@ -198,7 +198,7 @@ def main():
     st.markdown("<p style='text-align: center; color: #e8b4f0; font-size: 18px;'>~ A pastel goth dream for your ChatGPT conversations ~</p>", unsafe_allow_html=True)
     st.markdown("<div class='lace-divider'></div>", unsafe_allow_html=True)
 
-    # Sidebar with navigation
+    # Sidebar with navigation and rogue's gallery
     with st.sidebar:
         st.markdown("### 🦇 Navigation 🦇")
         page = st.radio(
@@ -206,6 +206,31 @@ def main():
             ["💬 Upload & Browse", "📊 About"],
             label_visibility="collapsed"
         )
+
+        # Show Rogue's Gallery if we have conversations loaded
+        if 'character_gallery' in st.session_state and st.session_state.character_gallery:
+            st.markdown("---")
+            st.markdown("### 🎭 Rogue's Gallery 🎭")
+            st.markdown("<p style='font-size: 12px; color: #c9a3d8;'>Click a character to filter threads!</p>", unsafe_allow_html=True)
+
+            gallery = st.session_state.character_gallery
+
+            # Show top characters
+            for char in gallery[:10]:  # Top 10 characters
+                with st.expander(f"🦇 {char['name']}"):
+                    st.markdown(f"**Threads:** {char['thread_count']}")
+                    st.markdown(f"**Total mentions:** {char['total_mentions']}")
+
+                    if char['dominant_themes']:
+                        st.markdown("**Themes:**")
+                        for theme in char['dominant_themes']:
+                            count = char['theme_counts'].get(theme, 0)
+                            st.markdown(f"- {theme} ({count})")
+
+                    # Filter button
+                    if st.button(f"📖 Show {char['name']}'s threads", key=f"gallery_{char['name']}"):
+                        st.session_state['filter_character'] = char['name']
+                        st.rerun()
 
     if page == "💬 Upload & Browse":
         show_upload_page()
@@ -256,6 +281,11 @@ def show_upload_page():
 
             if conversations:
                 st.success(f"✨ Found {len(conversations)} conversations! ✨")
+
+                # Generate character gallery for sidebar
+                st.session_state['character_gallery'] = analyze_character_gallery(conversations)
+                st.session_state['all_conversations'] = conversations
+
                 show_conversations(conversations)
             else:
                 st.warning("No conversations found in the export 🥺")
@@ -320,6 +350,19 @@ def show_conversations(conversations):
     # Apply filters
     filtered_convos = conversations
 
+    # Check if filtering by character from gallery
+    if 'filter_character' in st.session_state and st.session_state.filter_character:
+        gallery_char = st.session_state.filter_character
+        st.info(f"🦇 Showing threads featuring **{gallery_char}** (click button again to clear)")
+
+        # Clear button
+        if st.button("✨ Clear character filter"):
+            st.session_state.filter_character = None
+            st.rerun()
+
+        # Apply gallery character filter
+        filtered_convos = filter_by_characters(filtered_convos, [gallery_char])
+
     # Text search (in titles and/or content)
     if search_query:
         filtered_convos = search_conversations(
@@ -333,7 +376,7 @@ def show_conversations(conversations):
     if selected_themes:
         filtered_convos = filter_by_themes(filtered_convos, selected_themes)
 
-    # Character filter
+    # Character filter from text input
     if character_search:
         character_names = [name.strip() for name in character_search.split(',') if name.strip()]
         if character_names:

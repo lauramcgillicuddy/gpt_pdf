@@ -12,6 +12,8 @@ A beautifully designed Streamlit app for viewing and exporting your ChatGPT conv
 - 🔍 **Advanced Search** - Search in both titles AND message content!
 - 🎨 **Theme Detection** - Automatically detects content themes like Romance, Fluff, Explicit, Angst, Horror, Action, Humor, and more!
 - 👤 **Character Detection** - Smart AI finds recurring character names mentioned in conversations
+- 🎭 **Rogue's Gallery** - Sidebar character analytics! See all your RP partners with thread counts, total mentions, and dominant themes
+- 🦇 **One-Click Character Filter** - Click any character in the gallery to instantly filter to their threads
 - 🎭 **Content Filtering** - Filter conversations by detected themes or character names
 - 📊 **Multiple Sort Options** - Sort by date, title, or message count
 - 💬 **Beautiful Conversation Viewer** - Color-coded messages with timestamps
@@ -132,6 +134,15 @@ Automatically detects 12 different content themes:
 - Counts mentions to identify main characters
 - Shows top 5 characters per conversation
 - Search for specific characters across all conversations
+
+**🎭 Rogue's Gallery (Sidebar Analytics):**
+Perfect for roleplay tracking! The sidebar displays:
+- **Character Profiles**: All detected characters sorted by thread count
+- **Thread Count**: How many conversations each character appears in
+- **Total Mentions**: Sum of all mentions across all threads
+- **Dominant Themes**: Top 3 themes associated with each character
+- **One-Click Filtering**: Click "Show [Character]'s threads" to instantly filter
+- **Clear Overview**: See your RP partners at a glance (Lyra, Lucius Malfoy, Captain Hook, etc!)
 
 ### Export Formats
 

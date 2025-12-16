@@ -382,6 +382,80 @@ def filter_by_characters(
     return results
 
 
+def analyze_character_gallery(conversations: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Create a Rogue's Gallery! 🦇✨
+
+    Analyzes ALL characters across all conversations to create character profiles
+    with thread counts, theme breakdowns, and more!
+
+    Args:
+        conversations: List of all conversation dictionaries
+
+    Returns:
+        List of character profile dicts sorted by thread count
+    """
+    # Track characters across all conversations
+    character_profiles = {}
+
+    for convo in conversations:
+        # Detect characters in this conversation
+        characters = detect_characters(convo, min_mentions=2)
+        themes = detect_themes(convo)
+
+        for char in characters:
+            name = char['name']
+
+            if name not in character_profiles:
+                character_profiles[name] = {
+                    'name': name,
+                    'thread_count': 0,
+                    'total_mentions': 0,
+                    'themes': Counter(),
+                    'conversations': []
+                }
+
+            # Update stats
+            character_profiles[name]['thread_count'] += 1
+            character_profiles[name]['total_mentions'] += char['mentions']
+
+            # Track themes for this character
+            for theme in themes:
+                character_profiles[name]['themes'][theme] += 1
+
+            # Store conversation reference
+            character_profiles[name]['conversations'].append({
+                'title': convo.get('title', 'Untitled'),
+                'id': convo.get('id', ''),
+                'create_time': convo.get('create_time', 0),
+                'mentions': char['mentions']
+            })
+
+    # Convert to list and format
+    gallery = []
+    for name, profile in character_profiles.items():
+        # Get top 3 themes for this character
+        top_themes = profile['themes'].most_common(3)
+
+        gallery.append({
+            'name': name,
+            'thread_count': profile['thread_count'],
+            'total_mentions': profile['total_mentions'],
+            'dominant_themes': [theme for theme, count in top_themes],
+            'theme_counts': dict(top_themes),
+            'conversations': sorted(
+                profile['conversations'],
+                key=lambda x: x['create_time'],
+                reverse=True
+            )
+        })
+
+    # Sort by thread count (most threads first)
+    gallery.sort(key=lambda x: x['thread_count'], reverse=True)
+
+    return gallery
+
+
 def export_to_word(conversation: Dict[str, Any]) -> BytesIO:
     """
     Export conversation to Word document with pastel goth styling! 💜
