@@ -209,28 +209,33 @@ def main():
 
         # Show Rogue's Gallery if we have conversations loaded
         if 'character_gallery' in st.session_state and st.session_state.character_gallery:
-            st.markdown("---")
-            st.markdown("### 🎭 Rogue's Gallery 🎭")
-            st.markdown("<p style='font-size: 12px; color: #c9a3d8;'>Click a character to filter threads!</p>", unsafe_allow_html=True)
-
             gallery = st.session_state.character_gallery
 
-            # Show top characters
-            for char in gallery[:10]:  # Top 10 characters
-                with st.expander(f"🦇 {char['name']}"):
-                    st.markdown(f"**Threads:** {char['thread_count']}")
-                    st.markdown(f"**Total mentions:** {char['total_mentions']}")
+            if len(gallery) > 0:
+                st.markdown("---")
+                st.markdown("### 🎭 Rogue's Gallery 🎭")
+                st.markdown(f"<p style='font-size: 12px; color: #c9a3d8;'>Found {len(gallery)} characters! Click to filter threads.</p>", unsafe_allow_html=True)
 
-                    if char['dominant_themes']:
-                        st.markdown("**Themes:**")
-                        for theme in char['dominant_themes']:
-                            count = char['theme_counts'].get(theme, 0)
-                            st.markdown(f"- {theme} ({count})")
+                # Show top characters
+                for char in gallery[:10]:  # Top 10 characters
+                    with st.expander(f"🦇 {char['name']}"):
+                        st.markdown(f"**Threads:** {char['thread_count']}")
+                        st.markdown(f"**Total mentions:** {char['total_mentions']}")
 
-                    # Filter button
-                    if st.button(f"📖 Show {char['name']}'s threads", key=f"gallery_{char['name']}"):
-                        st.session_state['filter_character'] = char['name']
-                        st.rerun()
+                        if char['dominant_themes']:
+                            st.markdown("**Themes:**")
+                            for theme in char['dominant_themes']:
+                                count = char['theme_counts'].get(theme, 0)
+                                st.markdown(f"- {theme} ({count})")
+
+                        # Filter button
+                        if st.button(f"📖 Show {char['name']}'s threads", key=f"gallery_{char['name']}"):
+                            st.session_state['filter_character'] = char['name']
+                            st.rerun()
+            else:
+                st.markdown("---")
+                st.markdown("### 🦇 Rogue's Gallery 🦇")
+                st.info("No characters detected yet. Upload your export!")
 
     if page == "💬 Upload & Browse":
         show_upload_page()
@@ -283,8 +288,13 @@ def show_upload_page():
                 st.success(f"✨ Found {len(conversations)} conversations! ✨")
 
                 # Generate character gallery for sidebar
-                st.session_state['character_gallery'] = analyze_character_gallery(conversations)
+                gallery = analyze_character_gallery(conversations)
+                st.session_state['character_gallery'] = gallery
                 st.session_state['all_conversations'] = conversations
+
+                # Debug info
+                if gallery:
+                    st.info(f"🦇 Generated Rogue's Gallery with {len(gallery)} characters! Check the sidebar! 💜")
 
                 show_conversations(conversations)
             else:
